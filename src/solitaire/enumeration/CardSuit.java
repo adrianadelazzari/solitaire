@@ -2,10 +2,10 @@ package solitaire.enumeration;
 
 public enum CardSuit {
 	
-	HEART(0), //0 is red
-	DIAMOND(0),
-	CLUB(1), //1 is black
-	SPADE(1);
+	HEARTS(0), //0 is red
+	DIAMONDS(0),
+	CLUBS(1), //1 is black
+	SPADES(1);
 	
 	private int color;
 	
