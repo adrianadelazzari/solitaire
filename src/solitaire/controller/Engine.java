@@ -9,6 +9,16 @@ public class Engine {
 	private GameBoard gameBoard;
 	private BoardView boardView;
 	
+	public Engine() {
+		this.gameBoard = new GameBoard();
+		this.boardView = new BoardView();
+	}
+	
+	public void runGame() {
+		System.out.println("Engine - running game");
+		this.boardView.showBoard();
+	}
+	
 	public void startGame() {
 		
 	}
