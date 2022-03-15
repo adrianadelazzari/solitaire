@@ -1,6 +1,5 @@
 package solitaire.view;
 
-import java.awt.Color;
 import java.util.ArrayList;
 
 import javax.swing.JLabel;
@@ -10,17 +9,18 @@ import solitaire.model.Tableau;
 
 public class TableauView extends JPanel {
 	
+	protected int x, y;
+	
 	private ArrayList<CardView> cardView;
 	
-	public TableauView() {
-		super();
+	public TableauView(int x, int y) {
+		super.setLocation(x, y);
 		this.initializeTableauView();
 	}
 	
 	private void initializeTableauView() {
-		this.setSize(100, 100);
-		this.setOpaque(false);
-		
+		this.setSize(790, 140);
+		this.setOpaque(true);
 		JLabel label = new JLabel("Tableau");
 		this.add(label);
 	}

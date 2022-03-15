@@ -1,7 +1,5 @@
 package solitaire.view;
 
-import java.awt.Color;
-
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -32,18 +30,24 @@ public class BoardView {
 		this.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		this.frame.setLocationRelativeTo(null);
 		
-		JLayeredPane pane = new JLayeredPane();
-		
 		//setting background
 		ImageIcon icon = new ImageIcon("resources/images/background.png");
 		JLabel background = new JLabel();
 		background.setSize(1024, 768);
 		background.setIcon(icon);
 		
-		this.tableauView = new TableauView();
+		JLayeredPane pane = new JLayeredPane();
+		
+		this.tableauView = new TableauView(118, 363);
+		this.stockView = new StockView(119, 115);
+		this.wasteView = new WasteView(282, 115);
+		this.foundationView = new FoundationView(478, 115);
 
-		pane.add(tableauView, 2);
-	    pane.add(background, 1);
+		pane.add(background, 1);
+		pane.add(stockView, 0);
+		pane.add(tableauView, 0);
+		pane.add(wasteView, 0);
+		pane.add(foundationView, 0);
 
 		this.frame.add(pane);
 	}
