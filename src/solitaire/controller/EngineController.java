@@ -76,7 +76,7 @@ public class EngineController {
             this.allPileViews.add(p);
         }
 
-        for (CardSuit cardSuit : CardSuit.values()) {
+        for (int i = 0; i < CardSuit.values().length; i++) {
             PileView p = new PileView(100);
             p.setOffset(0);
             p.setType(PileType.FINAL);
