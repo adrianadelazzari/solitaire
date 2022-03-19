@@ -11,7 +11,7 @@ public class FoundationView extends JPanel {
 	
 	protected int x, y;
 	
-	private ArrayList<CardView> cardView;
+	private ArrayList<CardView> cardViewList;
 	
 	public FoundationView(int x, int y) {
 		super.setLocation(x, y);
@@ -31,11 +31,11 @@ public class FoundationView extends JPanel {
 
 	public ArrayList<CardView> getCardView() {
 		
-		return cardView;
+		return cardViewList;
 	}
 
 	public void setCardView(ArrayList<CardView> cardView) {
 		
-		this.cardView = cardView;
+		this.cardViewList = cardView;
 	}
 }

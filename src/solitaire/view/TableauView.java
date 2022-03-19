@@ -11,7 +11,7 @@ public class TableauView extends JPanel {
 	
 	protected int x, y;
 	
-	private ArrayList<CardView> cardView;
+	private ArrayList<CardView> cardViewList;
 	
 	public TableauView(int x, int y) {
 		super.setLocation(x, y);
@@ -30,10 +30,10 @@ public class TableauView extends JPanel {
 	}
 
 	public ArrayList<CardView> getCardView() {
-		return cardView;
+		return cardViewList;
 	}
 
 	public void setCardView(ArrayList<CardView> cardView) {
-		this.cardView = cardView;
+		this.cardViewList = cardView;
 	}
 }
