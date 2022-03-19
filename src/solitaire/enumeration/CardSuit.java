@@ -1,19 +1,28 @@
 package solitaire.enumeration;
 
+/**
+ * Enum to store the suit values
+ */
 public enum CardSuit {
-	
-	HEARTS(0), //0 is red
-	DIAMONDS(0),
-	CLUBS(1), //1 is black
-	SPADES(1);
-	
-	private int color;
-	
-	CardSuit(int color){
-		this.color = color;
+
+    SPADES('s', false),
+    HEARTS('h', true),
+    DIAMONDS('d', true),
+    CLUBS('c', false);
+
+    private final boolean isRed;
+    private final char name;
+
+    CardSuit(char name, boolean isRed) {
+        this.name = name;
+        this.isRed = isRed;
+    }
+
+	public boolean isRed() {
+		return this.isRed;
 	}
 
-	public int getColor() {
-		return color;
+	public char getName() {
+		return this.name;
 	}
 }
