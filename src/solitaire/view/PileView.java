@@ -1,187 +1,158 @@
 package solitaire.view;
 
 import solitaire.enumeration.CardRank;
-import solitaire.enumeration.PileType;
 import solitaire.enumeration.CardSuit;
+import solitaire.enumeration.PileType;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JLayeredPane;
+import java.awt.Dimension;
 import java.util.ArrayList;
 
+/**
+ * Pile view representing a column of cards.
+ */
 public class PileView extends JLayeredPane {
 
-    private final CardView base;
+    private final PileType pileType;
+    private final int pileWidth;
+    private final int cardOffset;
     private final ArrayList<CardView> cardViews;
-    private int offset = 15;
+    private final double cardHeight;
+
     private CardSuit cardSuitFilter;
-    private int width;
     private PileView pileParent;
-    private PileType type;
 
-    /**
-     * Class constructor
-     */
-    public PileView(int width) {
+    public PileView(PileType pileType) {
+        this.pileType = pileType;
+        this.pileWidth = pileType.getWidth();
+        this.cardOffset = pileType.getCardOffset();
+
         this.cardViews = new ArrayList<>();
-        this.width = width;
 
-        this.base = new CardView(null);
-        this.add(this.base, 1, 0);
+        CardView base = new CardView(null);
+        this.cardHeight = base.getSize().getHeight();
+        this.add(base, 1, 0);
 
-        this.type = PileType.NORMAL;
+        this.updateSize();
     }
 
     /**
      * Adds a new card to the top of the pile.
-     * No checking is done, card is always added
      */
-    public void addCard(CardView c) {
-        c.setLocation(0, this.offset * this.cardViews.size());
-        this.cardViews.add(c);
-
-        this.add(c, 1, 0);
+    public void addCard(CardView cardView) {
+        cardView.setLocation(0, this.cardOffset * this.cardViews.size());
+        this.cardViews.add(cardView);
+        this.add(cardView, 1, 0);
         this.updateSize();
     }
 
     /**
-     * Removes a card from the pile
-     * No checking is done, card is always remove
+     * Removes a card from the pile.
      */
-    public void removeCard(CardView c) {
-        this.cardViews.remove(c);
-        this.remove(c);
-
+    public void removeCard(CardView cardView) {
+        this.cardViews.remove(cardView);
+        this.remove(cardView);
         this.updateSize();
     }
 
     /**
-     * Draws a card from the pile. Pack must not be empty.
-     *
-     * @return First card in pack
+     * Draws a card from the pile.
      */
     public CardView drawCard() {
-        CardView c = this.cardViews.get(0);
-        this.removeCard(c);
-
-        return c;
+        CardView cardView = this.cardViews.get(0);
+        this.removeCard(cardView);
+        return cardView;
     }
 
     /**
-     * Sets the width of the pile column.
-     * This is mostyl used for adding padding.
+     * Updates pile size based on the number of cardViews in it.
      */
-    public void setWidth(int width) {
-        this.width = width;
-        this.updateSize();
-    }
-
-    /**
-     * Updates pile size based on the number of cardViews in it
-     */
-    public void updateSize() {
-        int height = this.base.getSize().height;
-
+    private void updateSize() {
+        int height = (int) this.cardHeight;
         if (!this.cardViews.isEmpty()) {
-            height += this.offset * (this.cardViews.size() - 1);
+            height += this.cardOffset * (this.cardViews.size() - 1);
         }
-
-        this.setPreferredSize(new Dimension(this.width, height));
-        this.setSize(this.width, height);
-    }
-
-
-    /**
-     * Changes the offset of the pile
-     */
-    public void setOffset(int offset) {
-        this.offset = offset;
-        this.updateSize();
+        this.setPreferredSize(new Dimension(this.pileWidth, height));
+        this.setSize(this.pileWidth, height);
     }
 
     /**
-     * Breaks the pile into two piles
-     * The top half is kept in this pile
+     * Breaks the pile into two piles. The top half is kept in this pile.
      */
     public PileView split(CardView first) {
-        PileView p = new PileView(100);
-
+        PileView newPileView = new PileView(PileType.TABLEAU);
         for (int i = 0; i < this.cardViews.size(); ++i) {
             if (this.cardViews.get(i) == first) {
                 while (i < this.cardViews.size()) {
-                    p.addCard(this.cardViews.get(i));
+                    newPileView.addCard(this.cardViews.get(i));
                     this.removeCard(this.cardViews.get(i));
                 }
             }
         }
-
-        p.pileParent = this;
-
-        return p;
+        newPileView.setPileParent(this);
+        return newPileView;
     }
 
     /**
-     * Merge the current pile with the given pile
-     * The given pile is placed on top
+     * Merge the current pile with the given pile.
      */
-    public void merge(PileView p) {
-        for (CardView c : p.cardViews)
-            this.addCard(c);
-
+    public void merge(PileView newPileView) {
+        for (CardView cardView : newPileView.getCardViews()) {
+            this.addCard(cardView);
+        }
         this.updateSize();
     }
 
     /**
-     * Solitaire conditions to check if a move is valid
+     * Check if a move is valid.
      */
-    public boolean acceptsPile(PileView p) {
+    public boolean acceptsPile(PileView newPileView) {
         // Can not add to itself
-        if (this == p) return false;
-
-        CardView newCardView = p.cardViews.get(0);
+        if (this == newPileView) {
+            return false;
+        }
+        CardView newCardView = newPileView.cardViews.get(0);
         CardView topCardView;
-
-        switch (this.type) {
-            case NORMAL -> {
+        // Check based on pile type.
+        switch (this.pileType) {
+            case TABLEAU -> {
                 // If it's empty it can only receive a King
                 if (this.cardViews.isEmpty()) {
                     return newCardView.getValue() == CardRank.K.getValue();
                 }
                 topCardView = this.cardViews.get(this.cardViews.size() - 1);
-                if (topCardView.isReversed()) return false;
-
+                if (topCardView.isHidden()) {
+                    return false;
+                }
                 // Different color, consecutive values, descending
-                if (topCardView.getSuit().isRed() != newCardView.getSuit().isRed())
+                if (topCardView.getSuit().isRed() != newCardView.getSuit().isRed()) {
                     if (topCardView.getValue() == newCardView.getValue() + 1 ||
                             topCardView.getValue() == 12 && newCardView.getValue() == 10) {
                         return true;
                     }
+                }
             }
-            case FINAL -> {
-
+            case FOUNDATION -> {
                 // Merge with a single card
-                if (p.cardViews.size() > 1) return false;
-
+                if (newPileView.cardViews.size() > 1) {
+                    return false;
+                }
                 // Start with an ace
                 if (this.cardViews.isEmpty() && newCardView.getValue() == 1) {
                     this.cardSuitFilter = newCardView.getSuit();
                     return true;
                 }
-
                 // Has to be the same color
-                if (this.cardSuitFilter != newCardView.getSuit()) return false;
-
+                if (this.cardSuitFilter != newCardView.getSuit()) {
+                    return false;
+                }
                 // Consecutive values, ascending
                 topCardView = this.cardViews.get(this.cardViews.size() - 1);
-                if (topCardView.getValue() == newCardView.getValue() - 1 ||
-                        topCardView.getValue() == 10 && newCardView.getValue() == 12) {
+                if (topCardView.getValue() == newCardView.getValue() - 1) {
                     return true;
                 }
             }
         }
-        return false;
-    }
-
-    public boolean isOptimizedDrawingEnabled() {
         return false;
     }
 
@@ -200,20 +171,15 @@ public class PileView extends JLayeredPane {
         return this.cardViews;
     }
 
-    @Override
-    public int getWidth() {
-        return this.width;
-    }
-
     public PileView getPileParent() {
         return this.pileParent;
     }
 
-    public PileType getType() {
-        return this.type;
+    public void setPileParent(PileView pileParent) {
+        this.pileParent = pileParent;
     }
 
-    public void setType(PileType type) {
-        this.type = type;
+    public PileType getPileType() {
+        return this.pileType;
     }
 }

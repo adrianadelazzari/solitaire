@@ -2,52 +2,71 @@ package solitaire.view;
 
 import solitaire.controller.EngineController;
 import solitaire.enumeration.PileType;
-import solitaire.view.component.JPanelWithBackground;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.imageio.ImageIO;
+import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JLayeredPane;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.WindowConstants;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 
+/**
+ * Board view representing the entire game
+ */
 public class BoardView extends JFrame implements MouseListener,
         MouseMotionListener {
 
-    // Map all the GUI text
-    private final JPanel gameArea;
-    private final JPanel columns;
+    private static final String GAME_TITLE = "Solitaire";
+
+    private final JPanel boardArea;
+    private final JPanel lowerColumns;
     private final JPanel topColumns;
-    private final JLayeredPane lp;
+    private final JLayeredPane jLayeredPane;
     private final EngineController engineController;
 
     // Auxiliary elements to use while dragging
     private PileView tempPileView;
     private Point mouseOffset;
 
-    /**
-     * GUI class constructor
-     */
     public BoardView(EngineController engineController) {
         this.engineController = engineController;
 
         // Window settings
-        this.setTitle("Solitaire");
+        this.setTitle(GAME_TITLE);
         this.setSize(900, 700);
         this.setResizable(false);
 
+        // Load background image
         try {
-            this.setContentPane((new JPanelWithBackground("/images/background.png")));
-        } catch (IOException e) {
+            InputStream inputStream = this.getClass().getResourceAsStream("/images/background.png");
+            if (inputStream == null) {
+                throw new Exception("Background image not found");
+            }
+            JLabel background = new JLabel(new ImageIcon(ImageIO.read(inputStream)));
+            this.setContentPane(background);
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
         this.setLayout(new BorderLayout());
 
-        this.gameArea = new JPanel();
-        this.gameArea.setOpaque(false);
-        this.gameArea.setLayout(new BoxLayout(this.gameArea, BoxLayout.PAGE_AXIS));
+        this.boardArea = new JPanel();
+        this.boardArea.setOpaque(false);
+        this.boardArea.setLayout(new BoxLayout(this.boardArea, BoxLayout.PAGE_AXIS));
 
         // Center the window
         this.setLocationRelativeTo(null);
@@ -59,13 +78,7 @@ public class BoardView extends JFrame implements MouseListener,
         FlowLayout flow = new FlowLayout(FlowLayout.CENTER);
         flow.setAlignOnBaseline(true);
 
-        // Add the columns panel
-        this.columns = new JPanel();
-        this.columns.setOpaque(false);
-        this.columns.setLayout(flow);
-        this.columns.setMinimumSize(new Dimension(200, 900));
-
-        // Add the top columns panel
+        // Add top columns panel
         FlowLayout topFlow = new FlowLayout(FlowLayout.LEFT);
         topFlow.setAlignOnBaseline(true);
 
@@ -73,55 +86,60 @@ public class BoardView extends JFrame implements MouseListener,
         this.topColumns.setOpaque(false);
         this.topColumns.setLayout(topFlow);
 
-        this.gameArea.add(this.topColumns);
-        this.gameArea.add(this.columns);
+        // Add lower columns panel
+        this.lowerColumns = new JPanel();
+        this.lowerColumns.setOpaque(false);
+        this.lowerColumns.setLayout(flow);
+        this.lowerColumns.setMinimumSize(new Dimension(200, 900));
 
-        //layers.add(dragLayer, JLayeredPane.DRAG_LAYER);
-        this.add(this.gameArea);
+        this.boardArea.add(this.topColumns);
+        this.boardArea.add(this.lowerColumns);
+
+        this.add(this.boardArea);
 
         // Display the window
-        this.lp = this.getLayeredPane();
+        this.jLayeredPane = this.getLayeredPane();
         this.setVisible(true);
 
-        // Auxiliarry elements
+        // Auxiliary elements
         this.mouseOffset = new Point(0, 0);
-
         this.initialize();
     }
 
     /**
-     * Add cardViews from the game to the GUI
+     * Initialize all views.
      */
     private void initialize() {
+        this.engineController.prepareGame();
+
         this.topColumns.removeAll();
-        this.columns.removeAll();
+        this.lowerColumns.removeAll();
 
         // Add a listener for each card
-        for (CardView c : this.engineController.getDeck().getCardViews()) {
-            c.addMouseListener(this);
-            c.addMouseMotionListener(this);
+        for (CardView cardView : this.engineController.getCardViewList()) {
+            cardView.addMouseListener(this);
+            cardView.addMouseMotionListener(this);
         }
 
-        this.engineController.setupGame();
-        for (PileView p : this.engineController.getPileViews()) {
-            this.columns.add(p);
+        for (PileView pileView : this.engineController.getTableauPileViews()) {
+            this.lowerColumns.add(pileView);
         }
 
-        this.topColumns.add(this.engineController.getDrawPileView());
-        this.topColumns.add(this.engineController.getGetPileView());
+        this.topColumns.add(this.engineController.getStockPileView());
+        this.topColumns.add(this.engineController.getWastePileView());
 
-        for (PileView p : this.engineController.getFinalPileViews()) {
-            this.topColumns.add(p);
+        for (PileView pileView : this.engineController.getFoundationPileViews()) {
+            this.topColumns.add(pileView);
         }
 
         this.validate();
     }
 
     /**
-     * Resets the whole game
+     * Starts new game.
      */
-    public void reset() {
-        this.engineController.resetCards();
+    public void restart() {
+        this.engineController.initialize();
         this.initialize();
         this.repaint();
     }
@@ -129,31 +147,23 @@ public class BoardView extends JFrame implements MouseListener,
     @Override
     public void mouseDragged(MouseEvent e) {
         if (this.tempPileView != null) {
-
             Point pos = this.getLocationOnScreen();
             pos.x = e.getLocationOnScreen().x - pos.x - this.mouseOffset.x;
             pos.y = e.getLocationOnScreen().y - pos.y - this.mouseOffset.y;
-
             this.tempPileView.setLocation(pos);
         }
         this.repaint();
     }
 
     @Override
-    public void mouseMoved(MouseEvent e) {
-
-    }
-
-    @Override
     public void mouseClicked(MouseEvent e) {
         if (e.getComponent() instanceof CardView) {
-            CardView c = (CardView) e.getComponent();
-            PileView p = (PileView) c.getParent();
-
-            switch (p.getType()) {
-                case DRAW -> this.engineController.drawCard();
-                case NORMAL -> this.engineController.clickPile(p);
-                case GET -> this.engineController.turnGetPile();
+            CardView cardView = (CardView) e.getComponent();
+            PileView pileView = (PileView) cardView.getParent();
+            switch (pileView.getPileType()) {
+                case STOCK -> this.engineController.drawCard();
+                case TABLEAU -> this.engineController.clickPile(pileView);
+                case WASTE -> this.engineController.resetStockPile();
             }
             this.repaint();
         }
@@ -162,20 +172,17 @@ public class BoardView extends JFrame implements MouseListener,
     @Override
     public void mousePressed(MouseEvent e) {
         if (e.getComponent() instanceof CardView) {
-            CardView c = (CardView) e.getComponent();
-
+            CardView cardView = (CardView) e.getComponent();
             // Do nothing if card is reversed
-            if (c.isReversed())
+            if (cardView.isHidden()) {
                 return;
-
-            PileView p = (PileView) c.getParent();
-
-            if (p.getCardViews().isEmpty() || p.getType() == PileType.FINAL) return;
-
-            this.tempPileView = p.split(c);
-
-
-            this.lp.add(this.tempPileView, JLayeredPane.DRAG_LAYER);
+            }
+            PileView pileView = (PileView) cardView.getParent();
+            if (pileView.getCardViews().isEmpty() || pileView.getPileType() == PileType.FOUNDATION) {
+                return;
+            }
+            this.tempPileView = pileView.split(cardView);
+            this.jLayeredPane.add(this.tempPileView, JLayeredPane.DRAG_LAYER);
 
             Point pos = this.getLocationOnScreen();
             this.mouseOffset = e.getPoint();
@@ -183,7 +190,6 @@ public class BoardView extends JFrame implements MouseListener,
             pos.y = e.getLocationOnScreen().y - pos.y - this.mouseOffset.y;
 
             this.tempPileView.setLocation(pos);
-
             this.repaint();
         }
     }
@@ -191,45 +197,45 @@ public class BoardView extends JFrame implements MouseListener,
     @Override
     public void mouseReleased(MouseEvent e) {
         if (this.tempPileView != null) {
-
             Point mousePos = e.getLocationOnScreen();
             boolean match = false;
-
             // Check if pile can merge with the pile it is dropped on
-            ArrayList<PileView> droppable = new ArrayList<>(this.engineController.getPileViews());
-            droppable.addAll(this.engineController.getFinalPileViews());
-
-            for (PileView p : droppable) {
-                Point pilePos = p.getLocationOnScreen();
-                Rectangle r = p.getBounds();
+            ArrayList<PileView> droppable = new ArrayList<>(this.engineController.getTableauPileViews());
+            droppable.addAll(this.engineController.getFoundationPileViews());
+            for (PileView pileView : droppable) {
+                Point pilePos = pileView.getLocationOnScreen();
+                Rectangle r = pileView.getBounds();
                 r.x = pilePos.x;
                 r.y = pilePos.y;
-
-                if (r.contains(mousePos) && p.acceptsPile(this.tempPileView)) {
-                    p.merge(this.tempPileView);
+                if (r.contains(mousePos) && pileView.acceptsPile(this.tempPileView)) {
+                    pileView.merge(this.tempPileView);
                     match = true;
                     break;
                 }
             }
-
             // Snap back if no merge is found
-            if (!match) this.tempPileView.getPileParent().merge(this.tempPileView);
-
-            this.lp.remove(this.tempPileView);
+            if (!match) {
+                this.tempPileView.getPileParent().merge(this.tempPileView);
+            }
+            this.jLayeredPane.remove(this.tempPileView);
             this.tempPileView = null;
-
             this.repaint();
-
-            if (this.engineController.checkWin()) {
-                JOptionPane.showMessageDialog(this, "You won! Congrats!");
-                this.reset();
+            if (this.engineController.checkGame()) {
+                JOptionPane.showMessageDialog(this, "You won! Congratulations!");
+                this.restart();
             }
         }
     }
 
+    @Override
+    public void mouseMoved(MouseEvent e) {
+    }
+
+    @Override
     public void mouseEntered(MouseEvent arg0) {
     }
 
+    @Override
     public void mouseExited(MouseEvent arg0) {
     }
 

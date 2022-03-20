@@ -1,5 +1,6 @@
 package solitaire.controller;
 
+import solitaire.enumeration.CardRank;
 import solitaire.enumeration.CardSuit;
 import solitaire.enumeration.PileType;
 import solitaire.model.Deck;
@@ -7,155 +8,135 @@ import solitaire.view.CardView;
 import solitaire.view.PileView;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Core class of the application.
- * Contains all objects and states of the game
+ * Engine of the game.
  */
 public class EngineController {
 
-    private final static int PILE_NUMBER = 7;
+    private final static int TABLEAU_PILE_COUNT = 7;
 
-    private ArrayList<PileView> pileViews;
-    private ArrayList<PileView> finalPileViews;
-    private PileView drawPileView, getPileView;
-    private ArrayList<PileView> allPileViews;
     private Deck deck;
+    private List<CardView> cardViewList;
+    private PileView stockPileView;
+    private PileView wastePileView;
+    private ArrayList<PileView> foundationPileViews;
+    private ArrayList<PileView> tableauPileViews;
 
-    /**
-     * Class constructor
-     */
     public EngineController() {
-        this.resetCards();
+        this.initialize();
     }
 
     /**
-     * Reset all game piles and the deck
+     * Initialize deck and all piles.
      */
-    public void resetCards() {
+    public void initialize() {
         this.deck = new Deck();
-        this.deck.shuffle();
-
-        this.drawPileView = new PileView(120);
-        this.drawPileView.setOffset(0);
-
-        this.getPileView = new PileView(180);
-        this.getPileView.setOffset(0);
-
-        this.finalPileViews = new ArrayList<>();
-        this.pileViews = new ArrayList<>();
-
-        this.allPileViews = new ArrayList<>();
-        this.allPileViews.add(this.drawPileView);
-        this.allPileViews.add(this.getPileView);
+        this.cardViewList = new ArrayList<>();
+        this.stockPileView = new PileView(PileType.STOCK);
+        this.wastePileView = new PileView(PileType.WASTE);
+        this.foundationPileViews = new ArrayList<>();
+        this.tableauPileViews = new ArrayList<>();
     }
 
     /**
-     * Setup the initial game state
+     * Prepare game.
      */
-    public void setupGame() {
-        // Generate piles
-        this.drawPileView.setType(PileType.DRAW);
-        this.getPileView.setType(PileType.GET);
-
-        for (int i = 1; i <= PILE_NUMBER; ++i) {
-            PileView p = new PileView(120);
-
-            // Add i cardViews to the current pile
+    public void prepareGame() {
+        // Tableau piles.
+        for (int i = 1; i <= TABLEAU_PILE_COUNT; ++i) {
+            PileView pileView = new PileView(PileType.TABLEAU);
+            // Add i cardViews to the current pile.
             for (int j = 1; j <= i; ++j) {
-                CardView cardView = this.deck.drawCard();
-                p.addCard(cardView);
-
-                if (j != i)
-                    cardView.hide();
-                else
-                    cardView.show();
+                CardView cardView = new CardView(this.deck.drawCard());
+                // Only the top card should be revealed.
+                cardView.setHidden(j != i);
+                pileView.addCard(cardView);
+                this.cardViewList.add(cardView);
             }
-
-            this.pileViews.add(p);
-            this.allPileViews.add(p);
+            this.tableauPileViews.add(pileView);
         }
-
+        // Foundation piles.
         for (int i = 0; i < CardSuit.values().length; i++) {
-            PileView p = new PileView(100);
-            p.setOffset(0);
-            p.setType(PileType.FINAL);
-            this.finalPileViews.add(p);
-            this.allPileViews.add(p);
+            PileView pileView = new PileView(PileType.FOUNDATION);
+            this.foundationPileViews.add(pileView);
         }
-
+        // Remaining cards go to stockpile.
         while (this.deck.size() > 0) {
-            CardView cardView = this.deck.drawCard();
-            cardView.hide();
-            this.drawPileView.addCard(cardView);
+            CardView cardView = new CardView(this.deck.drawCard());
+            cardView.setHidden(true);
+            this.stockPileView.addCard(cardView);
+            this.cardViewList.add(cardView);
         }
     }
 
     /**
-     * Draw a card from the draw pile and place it into the get pile
+     * Draw a card from stockpile and place it into waste pile.
      */
     public void drawCard() {
-        if (!this.drawPileView.getCardViews().isEmpty()) {
-            CardView drew = this.drawPileView.drawCard();
-            drew.setReversed(false);
-            this.getPileView.addCard(drew);
+        if (!this.stockPileView.getCardViews().isEmpty()) {
+            CardView cardView = this.stockPileView.drawCard();
+            cardView.setHidden(false);
+            this.wastePileView.addCard(cardView);
         }
     }
 
     /**
-     * When a normal pile is clicked, if the top card is reversed show it
+     * When a pile is clicked, if the top card is hidden show it
      */
-    public void clickPile(PileView p) {
-        if (!p.getCardViews().isEmpty()) {
-            CardView c = p.getCardViews().get(p.getCardViews().size() - 1);
-            if (c.isReversed()) {
-                c.setReversed(false);
+    public void clickPile(PileView pileView) {
+        if (!pileView.getCardViews().isEmpty()) {
+            CardView cardView = pileView.getCardViews().get(pileView.getCardViews().size() - 1);
+            if (cardView.isHidden()) {
+                cardView.setHidden(false);
             }
         }
     }
 
     /**
-     * Reverse the Get pile and place it again for Draw
+     * If stockpile is empty, reset it with waste pile.
      */
-    public void turnGetPile() {
-        if (!this.drawPileView.getCardViews().isEmpty()) return;
-
-        while (!this.getPileView.getCardViews().isEmpty()) {
-            CardView c = this.getPileView.drawCard();
-            c.setReversed(true);
-
-            this.drawPileView.addCard(c);
+    public void resetStockPile() {
+        if (!this.stockPileView.getCardViews().isEmpty()) {
+            return;
+        }
+        while (!this.wastePileView.getCardViews().isEmpty()) {
+            CardView cardView = this.wastePileView.drawCard();
+            cardView.setHidden(true);
+            this.stockPileView.addCard(cardView);
         }
     }
 
     /**
-     * Tests wheter all the cardViews have been placed in the correct pile
+     * Check if game is over.
      */
-    public boolean checkWin() {
-        for (PileView p : this.finalPileViews) {
-            if (p.getCardViews().size() != 13)
+    public boolean checkGame() {
+        for (PileView pileView : this.foundationPileViews) {
+            if (pileView.getCardViews().size() != CardRank.values().length) {
                 return false;
+            }
         }
         return true;
     }
 
-    public ArrayList<PileView> getPileViews() {
-        return this.pileViews;
+    public ArrayList<PileView> getTableauPileViews() {
+        return this.tableauPileViews;
     }
 
-    public ArrayList<PileView> getFinalPileViews() {
-        return this.finalPileViews;
+    public ArrayList<PileView> getFoundationPileViews() {
+        return this.foundationPileViews;
     }
 
-    public PileView getDrawPileView() {
-        return this.drawPileView;
+    public PileView getStockPileView() {
+        return this.stockPileView;
     }
 
-    public PileView getGetPileView() {
-        return this.getPileView;
+    public PileView getWastePileView() {
+        return this.wastePileView;
     }
 
-    public Deck getDeck() {
-        return this.deck;
+    public List<CardView> getCardViewList() {
+        return this.cardViewList;
     }
 }

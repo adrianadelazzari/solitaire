@@ -3,6 +3,9 @@ package solitaire.model;
 import solitaire.enumeration.CardRank;
 import solitaire.enumeration.CardSuit;
 
+/**
+ * Card model
+ */
 public class Card {
 
     private final CardSuit suit;
