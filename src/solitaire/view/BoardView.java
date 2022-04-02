@@ -20,7 +20,6 @@ import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 
@@ -39,6 +38,7 @@ public class BoardView extends JFrame implements MouseListener,
     private final EngineController engineController;
 
     // Auxiliary elements to use while dragging
+    private PileView tempParentPileView;
     private PileView tempPileView;
     private Point mouseOffset;
 
@@ -163,7 +163,6 @@ public class BoardView extends JFrame implements MouseListener,
             switch (pileView.getPileType()) {
                 case STOCK -> this.engineController.drawCard();
                 case TABLEAU -> this.engineController.clickPile(pileView);
-                case WASTE -> this.engineController.resetStockPile();
             }
             this.repaint();
         }
@@ -181,6 +180,7 @@ public class BoardView extends JFrame implements MouseListener,
             if (pileView.getCardViews().isEmpty() || pileView.getPileType() == PileType.FOUNDATION) {
                 return;
             }
+            this.tempParentPileView = pileView;
             this.tempPileView = pileView.split(cardView);
             this.jLayeredPane.add(this.tempPileView, JLayeredPane.DRAG_LAYER);
 
@@ -200,14 +200,20 @@ public class BoardView extends JFrame implements MouseListener,
             Point mousePos = e.getLocationOnScreen();
             boolean match = false;
             // Check if pile can merge with the pile it is dropped on
-            ArrayList<PileView> droppable = new ArrayList<>(this.engineController.getTableauPileViews());
-            droppable.addAll(this.engineController.getFoundationPileViews());
+            ArrayList<PileView> droppable = new ArrayList<>(this.engineController.getFoundationPileViews());
+            droppable.addAll(this.engineController.getTableauPileViews());
             for (PileView pileView : droppable) {
-                Point pilePos = pileView.getLocationOnScreen();
-                Rectangle r = pileView.getBounds();
-                r.x = pilePos.x;
-                r.y = pilePos.y;
-                if (r.contains(mousePos) && pileView.acceptsPile(this.tempPileView)) {
+                if (e.getClickCount() == 1) {
+                    Point pilePos = pileView.getLocationOnScreen();
+                    Rectangle r = pileView.getBounds();
+                    r.x = pilePos.x;
+                    r.y = pilePos.y;
+                    if (r.contains(mousePos) && pileView.acceptsPile(this.tempPileView)) {
+                        pileView.merge(this.tempPileView);
+                        match = true;
+                        break;
+                    }
+                } else if (pileView != this.tempParentPileView && pileView.acceptsPile(this.tempPileView)) {
                     pileView.merge(this.tempPileView);
                     match = true;
                     break;
@@ -216,9 +222,13 @@ public class BoardView extends JFrame implements MouseListener,
             // Snap back if no merge is found
             if (!match) {
                 this.tempPileView.getPileParent().merge(this.tempPileView);
+                if (e.getClickCount() >= 2 && PileType.WASTE.equals(this.tempParentPileView.getPileType())) {
+                    this.engineController.resetStockPile();
+                }
             }
             this.jLayeredPane.remove(this.tempPileView);
             this.tempPileView = null;
+            this.tempParentPileView = null;
             this.repaint();
             if (this.engineController.checkGame()) {
                 JOptionPane.showMessageDialog(this, "You won! Congratulations!");
