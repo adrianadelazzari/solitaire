@@ -126,8 +126,7 @@ public class PileView extends JLayeredPane {
                 }
                 // Different color, consecutive values, descending
                 if (topCardView.getSuit().isRed() != newCardView.getSuit().isRed()) {
-                    if (topCardView.getValue() == newCardView.getValue() + 1 ||
-                            topCardView.getValue() == 12 && newCardView.getValue() == 10) {
+                    if (topCardView.getValue() == newCardView.getValue() + 1 ) {
                         return true;
                     }
                 }
