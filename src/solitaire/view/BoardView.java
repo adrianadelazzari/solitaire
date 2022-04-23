@@ -162,12 +162,12 @@ public class BoardView extends JFrame implements MouseListener,
      */
     private void createTopMenu() {
         JMenuBar menuBar = new JMenuBar();
-        JMenu FileMenu = new JMenu("File");
+        JMenu FileMenu = new JMenu("Menu");
         FileMenu.setMnemonic(KeyEvent.VK_F);
         menuBar.add(FileMenu);
 
         Map<String, Integer> menuMap = new HashMap<>();
-        menuMap.put("New", KeyEvent.VK_N);
+        menuMap.put("New Game", KeyEvent.VK_N);
         menuMap.put("Exit", KeyEvent.VK_X);
         for (Map.Entry<String, Integer> entry : menuMap.entrySet()) {
             JMenuItem opt = new JMenuItem(entry.getKey());
@@ -176,7 +176,7 @@ public class BoardView extends JFrame implements MouseListener,
                 JMenuItem item = (JMenuItem) e.getSource();
                 if (item.getText().equals("Exit")) {
                     this.dispose();
-                } else if (item.getText().equals("New")) {
+                } else if (item.getText().equals("New Game")) {
                     this.restart();
                 }
             });
