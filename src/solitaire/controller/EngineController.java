@@ -6,6 +6,7 @@ import solitaire.enumeration.PileType;
 import solitaire.model.Deck;
 import solitaire.view.CardView;
 import solitaire.view.PileView;
+import solitaire.view.ScoreView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,8 +24,10 @@ public class EngineController {
     private PileView wastePileView;
     private ArrayList<PileView> foundationPileViews;
     private ArrayList<PileView> tableauPileViews;
+    private ScoreView scoreView;
 
     public EngineController() {
+        this.scoreView = new ScoreView();
         this.initialize();
     }
 
@@ -38,6 +41,7 @@ public class EngineController {
         this.wastePileView = new PileView(PileType.WASTE);
         this.foundationPileViews = new ArrayList<>();
         this.tableauPileViews = new ArrayList<>();
+        this.scoreView.initialize();
     }
 
     /**
@@ -112,12 +116,17 @@ public class EngineController {
      * Check if game is over.
      */
     public boolean checkGame() {
+        int points = 0;
+        boolean result = true;
         for (PileView pileView : this.foundationPileViews) {
-            if (pileView.getCardViews().size() != CardRank.values().length) {
-                return false;
+            int pileSize = pileView.getCardViews().size();
+            points += pileSize;
+            if (pileSize != CardRank.values().length) {
+                result = false;
             }
         }
-        return true;
+        this.scoreView.updateScore(points);
+        return result;
     }
 
     public ArrayList<PileView> getTableauPileViews() {
@@ -138,5 +147,9 @@ public class EngineController {
 
     public List<CardView> getCardViewList() {
         return this.cardViewList;
+    }
+
+    public ScoreView getScoreView() {
+        return this.scoreView;
     }
 }

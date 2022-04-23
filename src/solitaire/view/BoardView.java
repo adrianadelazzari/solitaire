@@ -85,15 +85,19 @@ public class BoardView extends JFrame implements MouseListener,
         this.topColumns = new JPanel();
         this.topColumns.setOpaque(false);
         this.topColumns.setLayout(topFlow);
+        this.topColumns.setMinimumSize(new Dimension(900, 270));
+        this.topColumns.setMaximumSize(new Dimension(900, 270));
 
         // Add lower columns panel
         this.lowerColumns = new JPanel();
         this.lowerColumns.setOpaque(false);
         this.lowerColumns.setLayout(flow);
-        this.lowerColumns.setMinimumSize(new Dimension(200, 900));
+        this.lowerColumns.setMinimumSize(new Dimension(900, 390));
+        this.lowerColumns.setMaximumSize(new Dimension(900, 390));
 
         this.boardArea.add(this.topColumns);
         this.boardArea.add(this.lowerColumns);
+        this.boardArea.add(this.engineController.getScoreView());
 
         this.add(this.boardArea);
 
