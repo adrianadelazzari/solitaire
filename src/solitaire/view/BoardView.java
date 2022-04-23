@@ -9,6 +9,9 @@ import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JLayeredPane;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.WindowConstants;
@@ -17,11 +20,14 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Board view representing the entire game
@@ -49,6 +55,9 @@ public class BoardView extends JFrame implements MouseListener,
         this.setTitle(GAME_TITLE);
         this.setSize(900, 700);
         this.setResizable(false);
+
+        // Add menu
+        this.createTopMenu();
 
         // Load background image
         try {
@@ -146,6 +155,35 @@ public class BoardView extends JFrame implements MouseListener,
         this.engineController.initialize();
         this.initialize();
         this.repaint();
+    }
+
+    /**
+     * Create top menu bar
+     */
+    private void createTopMenu() {
+        JMenuBar menuBar = new JMenuBar();
+        JMenu FileMenu = new JMenu("File");
+        FileMenu.setMnemonic(KeyEvent.VK_F);
+        menuBar.add(FileMenu);
+
+        Map<String, Integer> menuMap = new HashMap<>();
+        menuMap.put("New", KeyEvent.VK_N);
+        menuMap.put("Exit", KeyEvent.VK_X);
+        for (Map.Entry<String, Integer> entry : menuMap.entrySet()) {
+            JMenuItem opt = new JMenuItem(entry.getKey());
+            opt.setMnemonic(entry.getValue());
+            opt.addActionListener(e -> {
+                JMenuItem item = (JMenuItem) e.getSource();
+                if (item.getText().equals("Exit")) {
+                    this.dispose();
+                } else if (item.getText().equals("New")) {
+                    this.restart();
+                }
+            });
+            FileMenu.add(opt);
+        }
+
+        this.setJMenuBar(menuBar);
     }
 
     @Override
