@@ -38,7 +38,10 @@ public class ScoreView extends JPanel {
 
     public void updateScore(int points) {
         if (this.points < points) {
-            int bonus = (int) ((COMBO_BONUS - ((System.currentTimeMillis() - this.lastChange) / 1000)) + 1);
+            int bonus = (int) (COMBO_BONUS - ((System.currentTimeMillis() - this.lastChange) / 1000));
+            if(bonus < 1) {
+                bonus = 1;
+            }
             this.score += (points - this.points) * bonus;
             this.points = points;
             this.refreshScore();
