@@ -7,8 +7,8 @@ public enum PileType {
     FOUNDATION(100, 0),
     TABLEAU(120, 15);
 
-    private int width;
-    private int cardOffset;
+    private final int width;
+    private final int cardOffset;
 
     PileType(int width, int cardOffset) {
         this.width = width;

@@ -1,6 +1,7 @@
 package solitaire.view;
 
 import solitaire.controller.EngineController;
+import solitaire.enumeration.GameMode;
 import solitaire.enumeration.PileType;
 
 import javax.imageio.ImageIO;
@@ -20,20 +21,20 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Board view representing the entire game
  */
 public class BoardView extends JFrame implements MouseListener,
-        MouseMotionListener {
+        MouseMotionListener, ActionListener {
 
     private static final String GAME_TITLE = "Solitaire";
 
@@ -162,28 +163,44 @@ public class BoardView extends JFrame implements MouseListener,
      */
     private void createTopMenu() {
         JMenuBar menuBar = new JMenuBar();
-        JMenu FileMenu = new JMenu("Menu");
-        FileMenu.setMnemonic(KeyEvent.VK_F);
-        menuBar.add(FileMenu);
-
-        Map<String, Integer> menuMap = new HashMap<>();
-        menuMap.put("New Game", KeyEvent.VK_N);
-        menuMap.put("Exit", KeyEvent.VK_X);
-        for (Map.Entry<String, Integer> entry : menuMap.entrySet()) {
-            JMenuItem opt = new JMenuItem(entry.getKey());
-            opt.setMnemonic(entry.getValue());
-            opt.addActionListener(e -> {
-                JMenuItem item = (JMenuItem) e.getSource();
-                if (item.getText().equals("Exit")) {
-                    this.dispose();
-                } else if (item.getText().equals("New Game")) {
-                    this.restart();
-                }
-            });
-            FileMenu.add(opt);
-        }
-
         this.setJMenuBar(menuBar);
+
+        JMenu menu = new JMenu("Menu");
+        menu.setMnemonic(KeyEvent.VK_M);
+        menuBar.add(menu);
+
+        JMenu newGameMenu = new JMenu("New Game");
+        newGameMenu.setMnemonic(KeyEvent.VK_N);
+        menu.add(newGameMenu);
+
+        JMenuItem exitMenuItem = new JMenuItem("Exit");
+        exitMenuItem.setMnemonic(KeyEvent.VK_X);
+        exitMenuItem.addActionListener(this);
+        menu.add(exitMenuItem);
+
+        JMenuItem klondikeItem = new JMenuItem("Klondike");
+        klondikeItem.setMnemonic(KeyEvent.VK_K);
+        klondikeItem.addActionListener(this);
+        newGameMenu.add(klondikeItem);
+
+        JMenuItem vegasItem = new JMenuItem("Vegas");
+        vegasItem.setMnemonic(KeyEvent.VK_V);
+        vegasItem.addActionListener(this);
+        newGameMenu.add(vegasItem);
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        JMenuItem item = (JMenuItem) e.getSource();
+        if (item.getText().equals("Exit")) {
+            this.dispose();
+        } else if (item.getText().equals("Klondike")) {
+            this.engineController.setGameMode(GameMode.KLONDIKE);
+            this.restart();
+        } else if (item.getText().equals("Vegas")) {
+            this.engineController.setGameMode(GameMode.VEGAS);
+            this.restart();
+        }
     }
 
     @Override

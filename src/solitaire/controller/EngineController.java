@@ -2,6 +2,7 @@ package solitaire.controller;
 
 import solitaire.enumeration.CardRank;
 import solitaire.enumeration.CardSuit;
+import solitaire.enumeration.GameMode;
 import solitaire.enumeration.PileType;
 import solitaire.model.Deck;
 import solitaire.view.CardView;
@@ -18,6 +19,7 @@ public class EngineController {
 
     private final static int TABLEAU_PILE_COUNT = 7;
 
+    private GameMode gameMode;
     private Deck deck;
     private List<CardView> cardViewList;
     private PileView stockPileView;
@@ -27,6 +29,7 @@ public class EngineController {
     private ScoreView scoreView;
 
     public EngineController() {
+        this.gameMode = GameMode.KLONDIKE;
         this.scoreView = new ScoreView();
         this.initialize();
     }
@@ -41,7 +44,7 @@ public class EngineController {
         this.wastePileView = new PileView(PileType.WASTE);
         this.foundationPileViews = new ArrayList<>();
         this.tableauPileViews = new ArrayList<>();
-        this.scoreView.initialize();
+        this.scoreView.initialize(this.gameMode);
     }
 
     /**
@@ -102,7 +105,7 @@ public class EngineController {
      * If stockpile is empty, reset it with waste pile.
      */
     public void resetStockPile() {
-        if (!this.stockPileView.getCardViews().isEmpty()) {
+        if (!this.gameMode.equals(GameMode.KLONDIKE) || !this.stockPileView.getCardViews().isEmpty()) {
             return;
         }
         while (!this.wastePileView.getCardViews().isEmpty()) {
@@ -151,5 +154,9 @@ public class EngineController {
 
     public ScoreView getScoreView() {
         return this.scoreView;
+    }
+
+    public void setGameMode(GameMode gameMode) {
+        this.gameMode = gameMode;
     }
 }
